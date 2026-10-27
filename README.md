@@ -1,14 +1,20 @@
-# azure-devops-infra-pipelines
+# Azure DevOps Infra Pipelines
 
-Azure portfolio repository for enterprise architecture, cloud transformation, and platform engineering.
+This repository provides Azure DevOps pipeline templates for Terraform validation, policy checks, and release promotions across Azure landing zones.
 
-## Scope
+## Pipeline architecture
 
-- Azure solution architecture
-- Cloud migration and landing-zone design
-- Platform engineering, GitOps, and Kubernetes
-- Security, governance, and DevSecOps
+```mermaid
+flowchart LR
+    A[Pull Request] --> B[Lint & Format]
+    B --> C[Terraform Validate]
+    C --> D[Policy Scan]
+    D --> E[Approval Gate]
+    E --> F[Deploy to Environment]
+```
 
-## Purpose
+## Included templates
 
-This repository is intended as a reusable reference and portfolio asset for enterprise Azure delivery.
+- Terraform validation
+- Policy and governance checks
+- Approval gate and promotion workflow

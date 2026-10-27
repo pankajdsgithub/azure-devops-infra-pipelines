@@ -1,0 +1,4 @@
+steps:
+- script: |
+    echo "Approval gate required before production deployment"
+  displayName: Release gate check

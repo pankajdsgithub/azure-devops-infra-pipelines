@@ -1,0 +1,11 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+- script: |
+    echo "Terraform validation pipeline placeholder"
+  displayName: Validate infra pipeline

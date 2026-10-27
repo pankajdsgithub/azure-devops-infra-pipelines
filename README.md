@@ -4,15 +4,15 @@ This repository is part of the Azure Solution Architecture, Cloud Transformation
 
 ## Purpose
 
-This repo documents and demonstrates a focused Azure platform capability for enterprise delivery, migration readiness, and operating model maturity.
+This repository captures a focused Azure capability area for enterprise design, migration, platform maturity, and secure delivery operations.
 
 ## Scope
 
-- Architecture patterns and reusable design guidance
-- Platform engineering and secure automation examples
-- Terraform, Kubernetes, GitOps, governance, and DevSecOps references
-- Portfolio-ready documentation for enterprise adoption
+- Reference architecture and delivery patterns
+- Platform engineering and infrastructure governance guidance
+- Azure landing-zone, AKS, GitOps, networking, policy, DevSecOps, and migration enablement
+- Practical examples for enterprise environment adoption
 
 ## Notes
 
-This content is maintained as a portfolio and reference repository, not as a live production deployment.
+The content is intended as a professional portfolio and reference implementation, not as a deployed production environment.

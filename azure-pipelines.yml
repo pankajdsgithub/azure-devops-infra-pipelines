@@ -1,11 +1,77 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
+      - develop
 
-pool:
-  vmImage: ubuntu-latest
+pr:
+  branches:
+    include:
+      - main
+      - develop
 
-steps:
-- checkout: self
-- script: |
-    echo "Terraform validation pipeline placeholder"
-  displayName: Validate infra pipeline
+variables:
+  terraformVersion: '1.8.5'
+  tfsecVersion: '1.28.1'
+  trivyVersion: '0.53.0'
+
+stages:
+- stage: validate_pr
+  displayName: Pull request validation
+  jobs:
+  - job: terraform_validation
+    displayName: Terraform validation
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: self
+    - template: templates/terraform-validate.yml
+      parameters:
+        terraformVersion: $(terraformVersion)
+        workingDirectory: '$(Build.SourcesDirectory)'
+        backendDisabled: true
+    - template: templates/terraform-security.yml
+      parameters:
+        tfsecVersion: $(tfsecVersion)
+        trivyVersion: $(trivyVersion)
+        workingDirectory: '$(Build.SourcesDirectory)'
+
+- stage: plan_artifacts
+  displayName: Plan and artifact handling
+  dependsOn: validate_pr
+  condition: succeeded()
+  jobs:
+  - job: plan_output
+    displayName: Terraform plan artifact preparation
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - checkout: self
+    - bash: |
+        mkdir -p $(Build.ArtifactStagingDirectory)/tfplan-placeholder
+        echo "This repository is a reusable Azure DevOps reference project. No actual Terraform plan is generated here. This artifact is placeholder content only and is not a production plan output." > $(Build.ArtifactStagingDirectory)/tfplan-placeholder/README.txt
+      displayName: Prepare placeholder artifact only
+    - publish: $(Build.ArtifactStagingDirectory)/tfplan-placeholder
+      artifact: tfplan-placeholder
+      displayName: Publish placeholder artifact only
+
+# This repository intentionally does not implement or enable Azure deployment.
+# The stage below is disabled by design and exists only as a reusable example.
+# It is not an active production approval control and does not reference a real
+# service connection, subscription, or credentialed deployment target.
+- stage: future_deployments
+  displayName: Future deployment stages (disabled by design)
+  dependsOn: plan_artifacts
+  condition: false
+  jobs:
+  - deployment: prod_gate
+    displayName: Production approval gate example only
+    environment: production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: templates/release-gate.yml
+            parameters:
+              gateName: 'Production approval example'
+              instructions: 'This approval template is a reusable example only. No real production deployment is enabled in this repository.'

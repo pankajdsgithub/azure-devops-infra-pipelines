@@ -1,6 +1,64 @@
+parameters:
+- name: terraformVersion
+  type: string
+  default: '1.8.5'
+- name: workingDirectory
+  type: string
+  default: '$(Build.SourcesDirectory)'
+- name: backendDisabled
+  type: boolean
+  default: true
+- name: enableTflint
+  type: boolean
+  default: true
+
 steps:
-- script: |
+- task: UseTerraform@1
+  displayName: Install Terraform
+  inputs:
+    version: ${{ parameters.terraformVersion }}
+
+- bash: |
+    set -euo pipefail
+    cd "${{ parameters.workingDirectory }}"
+    if ! find . \( -path '*/.terraform' -o -path '*/.git' -o -path '*/vendor' -o -path '*/.venv' \) -prune -o -type f \( -name '*.tf' -o -name '*.tfvars' \) -print | grep -q .; then
+      echo "No Terraform configuration files were found after excluding generated and vendor directories. Skipping Terraform validation because this repository is a reusable reference project only."
+      exit 0
+    fi
+    if [ -d .terraform ]; then rm -rf .terraform; fi
+    terraform version
     terraform fmt -check -recursive
-    terraform init -backend=false
-    terraform validate
-  displayName: Validate Terraform
+    if [ "${{ parameters.backendDisabled }}" = "true" ]; then
+      terraform init -backend=false -input=false -no-color
+    else
+      terraform init -input=false -no-color
+    fi
+    terraform validate -no-color
+  displayName: Format, initialize, and validate Terraform
+  condition: succeeded()
+
+- bash: |
+    set -euo pipefail
+    if [ "${{ parameters.enableTflint }}" = "false" ]; then
+      echo "tflint is disabled for this pipeline configuration; no lint step was run."
+      exit 0
+    fi
+    cd "${{ parameters.workingDirectory }}"
+    if ! find . \( -path '*/.terraform' -o -path '*/.git' -o -path '*/vendor' -o -path '*/.venv' \) -prune -o -type f -name '*.tf' -print | grep -q .; then
+      echo "No Terraform configuration files were found; tflint was not run because no Terraform code was present."
+      exit 0
+    fi
+    if [ ! -f ".tflint.hcl" ]; then
+      echo "No .tflint.hcl file was found; tflint was not run because no lint configuration was declared for this repository."
+      exit 0
+    fi
+    curl -fsSL "https://github.com/terraform-linters/tflint/releases/download/${TFLINT_VERSION}/tflint_linux_amd64.zip" -o /tmp/tflint.zip
+    unzip -o /tmp/tflint.zip -d /tmp/tflint-bin
+    chmod +x /tmp/tflint-bin/tflint
+    /tmp/tflint-bin/tflint --version
+    /tmp/tflint-bin/tflint --chdir "${{ parameters.workingDirectory }}" --init
+    /tmp/tflint-bin/tflint --chdir "${{ parameters.workingDirectory }}"
+  displayName: Optional tflint validation
+  env:
+    TFLINT_VERSION: 'v0.53.0'
+  condition: succeeded()

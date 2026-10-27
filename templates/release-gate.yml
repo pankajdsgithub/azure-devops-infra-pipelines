@@ -1,4 +1,22 @@
+parameters:
+- name: gateName
+  type: string
+  default: 'Production approval'
+- name: instructions
+  type: string
+  default: 'Review the plan and approve only after checks have passed.'
+
 steps:
-- script: |
-    echo "Approval gate required before production deployment"
-  displayName: Release gate check
+- bash: |
+    set -euo pipefail
+    echo "${{ parameters.gateName }}"
+    echo "${{ parameters.instructions }}"
+    echo "Prerequisites: reviewed plan output, approved service connection, and valid environment variables."
+  displayName: Release gate reminder
+
+- task: ManualValidation@0
+  displayName: Manual approval gate
+  inputs:
+    notifyUsers: ''
+    instructions: ${{ parameters.instructions }}
+    onTimeout: 'reject'

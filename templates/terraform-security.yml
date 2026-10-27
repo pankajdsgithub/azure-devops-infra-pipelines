@@ -1,0 +1,59 @@
+parameters:
+- name: tfsecVersion
+  type: string
+  default: '1.28.1'
+- name: trivyVersion
+  type: string
+  default: '0.53.0'
+- name: workingDirectory
+  type: string
+  default: '$(Build.SourcesDirectory)'
+
+steps:
+- bash: |
+    set -euo pipefail
+    cd "${{ parameters.workingDirectory }}"
+    if ! find . \( -path '*/.terraform' -o -path '*/.git' -o -path '*/vendor' -o -path '*/.venv' \) -prune -o -type f \( -name '*.tf' -o -name '*.tfvars' \) -print | grep -q .; then
+      echo "No Terraform configuration files were found after excluding generated and vendor directories. Security scanning was skipped because this repository is a reference project only."
+      exit 0
+    fi
+
+    echo "Checking tfsec version ${TFSEC_VERSION}"
+    curl -fsSL "https://github.com/aquasecurity/tfsec/releases/download/v${TFSEC_VERSION}/tfsec-linux-amd64" -o /tmp/tfsec
+    chmod +x /tmp/tfsec
+    /tmp/tfsec --version
+    /tmp/tfsec .
+  displayName: tfsec security scan
+  env:
+    TFSEC_VERSION: ${{ parameters.tfsecVersion }}
+  condition: succeeded()
+
+- bash: |
+    set -euo pipefail
+    cd "${{ parameters.workingDirectory }}"
+    if ! find . \( -path '*/.terraform' -o -path '*/.git' -o -path '*/vendor' -o -path '*/.venv' \) -prune -o -type f -name '*.tf' -print | grep -q .; then
+      echo "No Terraform configuration files were found after excluding generated and vendor directories. Trivy scan was skipped because this repository is a reference project only."
+      exit 0
+    fi
+
+    echo "Checking Trivy version ${TRIVY_VERSION}"
+    curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" -o /tmp/trivy.tar.gz
+    mkdir -p /tmp/trivy-bin
+    tar -xzf /tmp/trivy.tar.gz -C /tmp/trivy-bin --strip-components=1
+    /tmp/trivy-bin/trivy --version
+    /tmp/trivy-bin/trivy config . --severity HIGH,CRITICAL --exit-code 1
+  displayName: Trivy config scan
+  env:
+    TRIVY_VERSION: ${{ parameters.trivyVersion }}
+  condition: succeeded()
+
+- bash: |
+    set -euo pipefail
+    cd "${{ parameters.workingDirectory }}"
+    if ! find . \( -path '*/.terraform' -o -path '*/.git' -o -path '*/vendor' -o -path '*/.venv' \) -prune -o -type f -name '*.tf' -print | grep -q .; then
+      echo "No Terraform configuration files were found; no additional policy checks were run because this repository is a reference project only."
+      exit 0
+    fi
+    echo "Security tooling versions are pinned for explicit review in this reference repository."
+  displayName: Security policy summary
+  condition: succeeded()

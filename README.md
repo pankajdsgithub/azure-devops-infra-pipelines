@@ -1,18 +1,14 @@
 # azure-devops-infra-pipelines
 
-This repository is part of the Azure Solution Architecture, Cloud Transformation, Platform Engineering, and DevSecOps portfolio.
-
-## Purpose
-
-This repository captures a focused Azure capability area for enterprise design, migration, platform maturity, and secure delivery operations.
+Azure portfolio repository for enterprise architecture, cloud transformation, and platform engineering.
 
 ## Scope
 
-- Reference architecture and delivery patterns
-- Platform engineering and infrastructure governance guidance
-- Azure landing-zone, AKS, GitOps, networking, policy, DevSecOps, and migration enablement
-- Practical examples for enterprise environment adoption
+- Azure solution architecture
+- Cloud migration and landing-zone design
+- Platform engineering, GitOps, and Kubernetes
+- Security, governance, and DevSecOps
 
-## Notes
+## Purpose
 
-The content is intended as a professional portfolio and reference implementation, not as a deployed production environment.
+This repository is intended as a reusable reference and portfolio asset for enterprise Azure delivery.
